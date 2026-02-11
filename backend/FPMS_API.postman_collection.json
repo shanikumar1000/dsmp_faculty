@@ -1,0 +1,163 @@
+{
+  "info": {
+    "name": "Faculty Performance Management System API",
+    "description": "Complete API collection for testing FPMS backend",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login (Mock)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"faculty@university.edu\",\n  \"password\": \"password123\",\n  \"role\": \"faculty\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/auth/login",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Faculty",
+      "item": [
+        {
+          "name": "Create Faculty Profile",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"faculty_id\": \"F12345\",\n  \"name\": \"Dr. John Doe\",\n  \"department\": \"Computer Science & Engineering\",\n  \"email\": \"john.doe@university.edu\",\n  \"scholar_id\": \"scholar123\",\n  \"designation\": \"Assistant Professor\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/faculty",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "faculty"]
+            }
+          }
+        },
+        {
+          "name": "Get Faculty Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/faculty/F12345",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "faculty", "F12345"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activities",
+      "item": [
+        {
+          "name": "Create Activity",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"faculty_id\": \"F12345\",\n  \"type\": \"Workshop\",\n  \"title\": \"Machine Learning Fundamentals\",\n  \"date\": \"2024-01-15\",\n  \"description\": \"A comprehensive workshop on ML basics\",\n  \"proof_link\": \"https://example.com/proof.pdf\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/activities",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "activities"]
+            }
+          }
+        },
+        {
+          "name": "Get Faculty Activities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/activities/F12345",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "activities", "F12345"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Publications",
+      "item": [
+        {
+          "name": "Create Publication",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"faculty_id\": \"F12345\",\n  \"paper_title\": \"AI in Education: A Comprehensive Review\",\n  \"journal_name\": \"IEEE Transactions on Learning\",\n  \"year\": \"2024\",\n  \"doi_link\": \"https://doi.org/10.1234/example\",\n  \"citations\": 5\n}"
+            },
+            "url": {
+              "raw": "http://localhost:5000/api/publications",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "publications"]
+            }
+          }
+        },
+        {
+          "name": "Get Faculty Publications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:5000/api/publications/F12345",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "5000",
+              "path": ["api", "publications", "F12345"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

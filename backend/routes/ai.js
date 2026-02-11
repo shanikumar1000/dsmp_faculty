@@ -1,0 +1,7 @@
+const express = require('express');
+const router = express.Router();
+const { analyzePerformance } = require('../controllers/aiController');
+
+router.post('/analyze', analyzePerformance);
+
+module.exports = router;
