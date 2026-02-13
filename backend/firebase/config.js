@@ -13,16 +13,20 @@ const serviceAccount = {
   client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
 };
 
+let db = null;
+let auth = null;
+
 try {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
   });
   console.log('✅ Firebase Admin initialized successfully');
+  db = admin.firestore();
+  auth = admin.auth();
 } catch (error) {
   console.error('❌ Firebase Admin initialization error:', error.message);
+  console.warn('⚠️  Firebase features will be unavailable. Supabase endpoints will still work.');
 }
 
-const db = admin.firestore();
-const auth = admin.auth();
-
 module.exports = { admin, db, auth };
+

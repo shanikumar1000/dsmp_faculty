@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import Navbar from '../components/Navbar';
-import { supabase } from '../lib/supabase';
 import { FileText, Download, Loader2, CheckCircle, AlertCircle, Calendar, Filter, Users } from 'lucide-react';
 
 interface AdminReportsPageProps {
@@ -60,13 +59,11 @@ export default function AdminReportsPage({
 
     const fetchActivities = async () => {
         try {
-            const { data, error } = await supabase
-                .from('activities')
-                .select('*, profiles:user_id(full_name, department, employee_id)')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-            setActivities(data || []);
+            const response = await fetch('http://localhost:5000/api/admin/activities');
+            const result = await response.json();
+            if (result.success) {
+                setActivities(result.data || []);
+            }
         } catch (err) {
             console.error('Error fetching activities:', err);
         }
@@ -74,14 +71,15 @@ export default function AdminReportsPage({
 
     const fetchFaculty = async () => {
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('id, full_name, employee_id')
-                .eq('role', 'faculty')
-                .order('full_name');
-
-            if (error) throw error;
-            setFacultyList(data || []);
+            const response = await fetch('http://localhost:5000/api/admin/faculty');
+            const result = await response.json();
+            if (result.success) {
+                setFacultyList((result.data || []).map((f: any) => ({
+                    id: f.id,
+                    full_name: f.full_name,
+                    employee_id: f.employee_id
+                })));
+            }
         } catch (err) {
             console.error('Error fetching faculty:', err);
         }
@@ -89,8 +87,13 @@ export default function AdminReportsPage({
 
     const handleApprove = async (id: string) => {
         try {
-            const { error } = await supabase.from('activities').update({ status: 'approved' }).eq('id', id);
-            if (error) throw error;
+            const response = await fetch(`http://localhost:5000/api/admin/activities/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'approved' })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
             setActivities(prev => prev.map(a => a.id === id ? { ...a, status: 'approved' } : a));
             showMessage('success', 'Activity approved.');
         } catch {
@@ -100,8 +103,13 @@ export default function AdminReportsPage({
 
     const handleReject = async (id: string) => {
         try {
-            const { error } = await supabase.from('activities').update({ status: 'rejected' }).eq('id', id);
-            if (error) throw error;
+            const response = await fetch(`http://localhost:5000/api/admin/activities/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'rejected' })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.message);
             setActivities(prev => prev.map(a => a.id === id ? { ...a, status: 'rejected' } : a));
             showMessage('success', 'Activity rejected.');
         } catch {

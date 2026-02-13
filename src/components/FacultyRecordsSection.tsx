@@ -27,16 +27,10 @@ export default function FacultyRecordsSection() {
   const fetchFaculty = async () => {
     try {
       setIsLoading(true);
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, department, employee_id, total_publications, performance_score')
-        .eq('role', 'faculty')
-        .order('full_name', { ascending: true });
-
-      if (error) throw error;
-
-      setFaculty(data || []);
+      const response = await fetch('http://localhost:5000/api/admin/faculty');
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'Failed to fetch');
+      setFaculty(result.data || []);
     } catch (error) {
       console.error('Failed to fetch faculty:', error);
     } finally {
@@ -109,11 +103,10 @@ export default function FacultyRecordsSection() {
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Faculty Records</h2>
 
       {message && (
-        <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${
-          message.type === 'success'
+        <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${message.type === 'success'
             ? 'bg-green-50 border border-green-200'
             : 'bg-red-50 border border-red-200'
-        }`}>
+          }`}>
           {message.type === 'success' ? (
             <CheckCircle className="text-green-600" size={20} />
           ) : (

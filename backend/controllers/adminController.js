@@ -189,10 +189,155 @@ const getRecentActivities = async (req, res) => {
   }
 };
 
+const createFaculty = async (req, res) => {
+  try {
+    const { full_name, email, department, designation, employee_id, google_scholar_id } = req.body;
+
+    if (!full_name || !email || !department || !designation || !employee_id) {
+      return res.status(400).json({ success: false, message: 'All required fields must be provided.' });
+    }
+
+    // Check if employee_id already exists
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('employee_id', employee_id)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'Employee ID already exists.' });
+    }
+
+    // Create auth user with a temporary password
+    const tempPassword = `Temp@${Date.now()}`;
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true
+    });
+
+    if (authError) {
+      console.error('Auth user creation error:', authError);
+      return res.status(400).json({ success: false, message: authError.message });
+    }
+
+    // Insert profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        full_name,
+        email,
+        department,
+        designation,
+        employee_id,
+        google_scholar_id: google_scholar_id || null,
+        role: 'faculty'
+      });
+
+    if (profileError) {
+      // Rollback: delete the auth user if profile insert fails
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      console.error('Profile creation error:', profileError);
+      return res.status(400).json({ success: false, message: profileError.message });
+    }
+
+    res.json({ success: true, message: 'Faculty created successfully.' });
+  } catch (error) {
+    console.error('Create faculty error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create faculty.' });
+  }
+};
+
+const getAllFaculty = async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('role', 'faculty')
+      .order('full_name', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({ success: true, data: data || [] });
+  } catch (error) {
+    console.error('Get all faculty error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch faculty.' });
+  }
+};
+
+const getAllActivities = async (req, res) => {
+  try {
+    // Fetch all activities
+    const { data: activities, error: actError } = await supabase
+      .from('activities')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (actError) throw actError;
+
+    if (!activities || activities.length === 0) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Fetch all profiles for mapping faculty names
+    const userIds = [...new Set(activities.map(a => a.user_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, department, employee_id')
+      .in('id', userIds);
+
+    const profileMap = {};
+    if (profiles) {
+      profiles.forEach(p => {
+        profileMap[p.id] = { full_name: p.full_name, department: p.department, employee_id: p.employee_id };
+      });
+    }
+
+    // Merge activities with profile data
+    const enriched = activities.map(a => ({
+      ...a,
+      profiles: profileMap[a.user_id] || { full_name: 'Unknown', department: '', employee_id: '' }
+    }));
+
+    res.json({ success: true, data: enriched });
+  } catch (error) {
+    console.error('Get all activities error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch activities.' });
+  }
+};
+
+const updateActivityStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['approved', 'rejected', 'pending'].includes(status)) {
+      return res.status(400).json({ success: false, message: 'Invalid status.' });
+    }
+
+    const { error } = await supabase
+      .from('activities')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    res.json({ success: true, message: `Activity ${status} successfully.` });
+  } catch (error) {
+    console.error('Update activity status error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update activity status.' });
+  }
+};
+
 module.exports = {
   getAdminStats,
   getPublicationTrends,
   getDepartmentPerformance,
   getTopFaculty,
-  getRecentActivities
+  getRecentActivities,
+  createFaculty,
+  getAllFaculty,
+  getAllActivities,
+  updateActivityStatus
 };

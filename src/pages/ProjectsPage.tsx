@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Search, Plus, Eye, Edit, Upload, X } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { Search, Plus, Eye, X, AlertCircle, CheckCircle, Loader2, Upload } from 'lucide-react';
 
 interface ProjectsPageProps {
   onLogout: () => void;
@@ -11,29 +12,74 @@ interface ProjectsPageProps {
 interface Project {
   id: string;
   title: string;
-  type: 'Funded' | 'Industry' | 'Internal';
+  type: string;
   startDate: string;
   endDate: string;
   grantAmount: number | null;
-  status: 'Ongoing' | 'Completed';
+  status: string;
   description: string;
+  activityStatus: string;
+  created_at: string;
 }
 
 export default function ProjectsPage({ onLogout, activeMenuItem, onSidebarItemClick }: ProjectsPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [formData, setFormData] = useState({
     title: '',
-    type: 'Funded' as 'Funded' | 'Industry' | 'Internal',
+    type: 'Funded' as string,
     startDate: '',
     endDate: '',
     grantAmount: '',
-    status: 'Ongoing' as 'Ongoing' | 'Completed',
+    status: 'Ongoing' as string,
     description: '',
   });
 
-  const projects: Project[] = [];
+  const fetchProjects = async () => {
+    try {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('activity_type', 'Project')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: Project[] = (data || []).map((a: any) => ({
+        id: a.id,
+        title: a.title || a.activity_data?.projectTitle || 'Untitled',
+        type: a.activity_data?.projectType || 'Internal',
+        startDate: a.activity_data?.durationFrom || '',
+        endDate: a.activity_data?.durationTo || '',
+        grantAmount: a.activity_data?.grantAmount ? Number(a.activity_data.grantAmount) : null,
+        status: a.activity_data?.projectStatus || 'Ongoing',
+        description: a.description || a.activity_data?.description || '',
+        activityStatus: a.status,
+        created_at: a.created_at,
+      }));
+
+      setProjects(mapped);
+    } catch (err) {
+      console.error('Failed to fetch projects:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
   const stats = {
     totalProjects: projects.length,
@@ -54,22 +100,57 @@ export default function ProjectsPage({ onLogout, activeMenuItem, onSidebarItemCl
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Project submitted:', formData);
-    setIsModalOpen(false);
-    setFormData({
-      title: '',
-      type: 'Funded',
-      startDate: '',
-      endDate: '',
-      grantAmount: '',
-      status: 'Ongoing',
-      description: '',
-    });
+    setIsSubmitting(true);
+    setMessage(null);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error } = await supabase.from('activities').insert({
+        user_id: user.id,
+        activity_type: 'Project',
+        title: formData.title,
+        description: formData.description,
+        activity_data: {
+          projectTitle: formData.title,
+          projectType: formData.type,
+          durationFrom: formData.startDate,
+          durationTo: formData.endDate,
+          grantAmount: formData.grantAmount,
+          projectStatus: formData.status,
+          description: formData.description,
+        },
+        status: 'pending',
+      });
+
+      if (error) throw error;
+
+      setMessage({ type: 'success', text: 'Project added successfully!' });
+      setIsModalOpen(false);
+      setFormData({
+        title: '',
+        type: 'Funded',
+        startDate: '',
+        endDate: '',
+        grantAmount: '',
+        status: 'Ongoing',
+        description: '',
+      });
+      fetchProjects();
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to add project' });
+      setTimeout(() => setMessage(null), 3000);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatDate = (dateString: string): string => {
+    if (!dateString) return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
   };
@@ -114,6 +195,21 @@ export default function ProjectsPage({ onLogout, activeMenuItem, onSidebarItemCl
             Add New Project
           </button>
         </div>
+
+        {/* Message */}
+        {message && (
+          <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${message.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+            }`}>
+            {message.type === 'success' ? (
+              <CheckCircle className="text-green-600 flex-shrink-0" size={20} />
+            ) : (
+              <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+            )}
+            <p className={message.type === 'success' ? 'text-green-800 text-sm' : 'text-red-800 text-sm'}>
+              {message.text}
+            </p>
+          </div>
+        )}
 
         {/* SECTION 2 - Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
@@ -162,7 +258,11 @@ export default function ProjectsPage({ onLogout, activeMenuItem, onSidebarItemCl
             </select>
           </div>
 
-          {filteredProjects.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Loading projects...</p>
+            </div>
+          ) : filteredProjects.length === 0 ? (
             <div className="text-center py-12">
               <div className="bg-gray-50 rounded-lg p-8 border border-gray-200">
                 <p className="text-gray-600 font-medium mb-2">No projects found</p>
@@ -190,41 +290,54 @@ export default function ProjectsPage({ onLogout, activeMenuItem, onSidebarItemCl
                 </thead>
                 <tbody>
                   {filteredProjects.map((project) => (
-                    <tr key={project.id} className="border-b border-gray-200 hover:bg-blue-50 transition-colors">
-                      <td className="py-4 px-4 font-medium text-gray-900 max-w-xs truncate">{project.title}</td>
-                      <td className="py-4 px-4">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(project.type)}`}>
-                          {project.type}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-gray-600">
-                        {formatDate(project.startDate)} - {formatDate(project.endDate)}
-                      </td>
-                      <td className="py-4 px-4 text-gray-900 font-semibold">
-                        {project.grantAmount ? `₹${project.grantAmount.toLocaleString('en-IN')}` : '-'}
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(project.status)}`}>
-                          {project.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-2">
+                    <>
+                      <tr key={project.id} className="border-b border-gray-200 hover:bg-blue-50 transition-colors">
+                        <td className="py-4 px-4 font-medium text-gray-900 max-w-xs truncate">{project.title}</td>
+                        <td className="py-4 px-4">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(project.type)}`}>
+                            {project.type}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-gray-600">
+                          {formatDate(project.startDate)} - {formatDate(project.endDate)}
+                        </td>
+                        <td className="py-4 px-4 text-gray-900 font-semibold">
+                          {project.grantAmount ? `₹${project.grantAmount.toLocaleString('en-IN')}` : '-'}
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(project.status)}`}>
+                            {project.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
                           <button
+                            onClick={() => setExpandedId(expandedId === project.id ? null : project.id)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="View Project"
+                            title="View Details"
                           >
                             <Eye size={18} />
                           </button>
-                          <button
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Edit Project"
-                          >
-                            <Edit size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
+                      {expandedId === project.id && (
+                        <tr key={`${project.id}-detail`} className="bg-blue-50">
+                          <td colSpan={6} className="px-4 py-6">
+                            <div className="space-y-2">
+                              <p className="text-sm text-gray-700"><strong>Description:</strong> {project.description || 'No description'}</p>
+                              <p className="text-sm text-gray-700"><strong>Approval Status:</strong>{' '}
+                                <span className={`inline-block px-2 py-0.5 rounded text-xs font-semibold ${project.activityStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                    project.activityStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                      'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                  {project.activityStatus.charAt(0).toUpperCase() + project.activityStatus.slice(1)}
+                                </span>
+                              </p>
+                              <p className="text-xs text-gray-500">Added: {formatDate(project.created_at)}</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </>
                   ))}
                 </tbody>
               </table>
@@ -372,9 +485,11 @@ export default function ProjectsPage({ onLogout, activeMenuItem, onSidebarItemCl
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all"
+                  disabled={isSubmitting}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50"
                 >
-                  Submit
+                  {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
                 </button>
               </div>
             </form>

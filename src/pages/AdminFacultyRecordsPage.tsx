@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import Navbar from '../components/Navbar';
 import { supabase } from '../lib/supabase';
-import { Search, Eye, Download, Loader2, CheckCircle, AlertCircle, X, Users } from 'lucide-react';
+import { Search, Eye, Download, Loader2, CheckCircle, AlertCircle, X, Users, Plus } from 'lucide-react';
 
 interface AdminFacultyRecordsPageProps {
     onLogout: () => void;
@@ -41,6 +41,16 @@ export default function AdminFacultyRecordsPage({
     const [selectedFaculty, setSelectedFaculty] = useState<Faculty | null>(null);
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        full_name: '',
+        email: '',
+        department: '',
+        designation: '',
+        employee_id: '',
+        google_scholar_id: ''
+    });
 
     useEffect(() => {
         fetchFaculty();
@@ -49,14 +59,10 @@ export default function AdminFacultyRecordsPage({
     const fetchFaculty = async () => {
         try {
             setIsLoading(true);
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('role', 'faculty')
-                .order('full_name', { ascending: true });
-
-            if (error) throw error;
-            setFaculty(data || []);
+            const response = await fetch('http://localhost:5000/api/admin/faculty');
+            const result = await response.json();
+            if (!response.ok || !result.success) throw new Error(result.message || 'Failed to fetch');
+            setFaculty(result.data || []);
         } catch (error) {
             console.error('Failed to fetch faculty:', error);
         } finally {
@@ -95,6 +101,37 @@ export default function AdminFacultyRecordsPage({
             setTimeout(() => setMessage(null), 3000);
         } finally {
             setDownloadingId(null);
+        }
+    };
+
+    const handleAddFaculty = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            setIsSubmitting(true);
+            setMessage(null);
+
+            const response = await fetch('http://localhost:5000/api/admin/create-faculty', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to create faculty');
+            }
+
+            setMessage({ type: 'success', text: 'Faculty member added successfully!' });
+            setShowAddModal(false);
+            setFormData({ full_name: '', email: '', department: '', designation: '', employee_id: '', google_scholar_id: '' });
+            fetchFaculty();
+            setTimeout(() => setMessage(null), 3000);
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || 'Failed to add faculty member.' });
+            setTimeout(() => setMessage(null), 5000);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -143,9 +180,18 @@ export default function AdminFacultyRecordsPage({
                 <main className="flex-1 overflow-y-auto">
                     <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full">
                         {/* Header */}
-                        <div className="mb-6 sm:mb-8">
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Faculty Records</h1>
-                            <p className="text-gray-600 mt-2 text-sm sm:text-base">View and manage all faculty profiles, performance, and reports.</p>
+                        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Faculty Records</h1>
+                                <p className="text-gray-600 mt-2 text-sm sm:text-base">View and manage all faculty profiles, performance, and reports.</p>
+                            </div>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all shadow-sm self-start sm:self-auto"
+                            >
+                                <Plus size={20} />
+                                Add New Faculty
+                            </button>
                         </div>
 
                         {/* Message */}
@@ -369,6 +415,112 @@ export default function AdminFacultyRecordsPage({
                                 {downloadingId === selectedFaculty.id ? 'Generating Report...' : 'Download PDF Report'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Faculty Modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-gray-900">Add New Faculty</h2>
+                            <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                                <X size={24} className="text-gray-600" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddFaculty} className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.full_name}
+                                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="Dr. John Doe"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                    placeholder="john.doe@university.edu"
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Department <span className="text-red-500">*</span></label>
+                                    <select
+                                        required
+                                        value={formData.department}
+                                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none bg-white"
+                                    >
+                                        <option value="">Select Department</option>
+                                        <option value="CSE">CSE</option>
+                                        <option value="Data Science">Data Science</option>
+                                        <option value="Electrical">Electrical</option>
+                                        <option value="ECE">ECE</option>
+                                        <option value="IT">IT</option>
+                                        <option value="Mechanical">Mechanical</option>
+                                        <option value="Civil">Civil</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Designation <span className="text-red-500">*</span></label>
+                                    <select
+                                        required
+                                        value={formData.designation}
+                                        onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all appearance-none bg-white"
+                                    >
+                                        <option value="">Select Designation</option>
+                                        <option value="Assistant Professor">Assistant Professor</option>
+                                        <option value="Associate Professor">Associate Professor</option>
+                                        <option value="Professor">Professor</option>
+                                        <option value="Head of Department">Head of Department</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Employee ID <span className="text-red-500">*</span></label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={formData.employee_id}
+                                        onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="EMP001"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Google Scholar ID</label>
+                                    <input
+                                        type="text"
+                                        value={formData.google_scholar_id}
+                                        onChange={(e) => setFormData({ ...formData, google_scholar_id: e.target.value })}
+                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                                        placeholder="Optional"
+                                    />
+                                </div>
+                            </div>
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50"
+                                >
+                                    {isSubmitting ? <Loader2 className="animate-spin" size={18} /> : <Plus size={18} />}
+                                    {isSubmitting ? 'Creating...' : 'Add Faculty Member'}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

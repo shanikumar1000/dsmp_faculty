@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import AddPublicationModal from '../components/AddPublicationModal';
+import { supabase } from '../lib/supabase';
 import { Search, Download } from 'lucide-react';
+import { useProfile } from '../hooks/useProfile';
 
 interface PublicationsPageProps {
   onLogout: () => void;
@@ -23,14 +25,52 @@ export default function PublicationsPage({ onLogout, activeMenuItem, onSidebarIt
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterYear, setFilterYear] = useState('all');
+  const [publications, setPublications] = useState<Publication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { profile } = useProfile();
 
-  const stats = {
-    totalPublications: 0,
-    totalCitations: 0,
-    hIndex: 0,
+  const fetchPublications = async () => {
+    try {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('activities')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('activity_type', 'Publication')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped: Publication[] = (data || []).map((a: any) => ({
+        id: a.id,
+        year: parseInt(a.activity_data?.year) || new Date(a.created_at).getFullYear(),
+        title: a.title || a.activity_data?.paperTitle || 'Untitled',
+        journalConference: a.activity_data?.journalName || '-',
+        citations: 0,
+        doi: a.activity_data?.doiLink || '',
+        status: a.status || 'pending',
+      }));
+
+      setPublications(mapped);
+    } catch (err) {
+      console.error('Failed to fetch publications:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const publications: Publication[] = [];
+  useEffect(() => {
+    fetchPublications();
+  }, []);
+
+  const stats = {
+    totalPublications: profile?.total_publications || publications.length,
+    totalCitations: profile?.total_citations || 0,
+    hIndex: profile?.h_index || 0,
+  };
 
   const filteredPublications = publications.filter((pub) => {
     const matchesSearch =
@@ -44,6 +84,10 @@ export default function PublicationsPage({ onLogout, activeMenuItem, onSidebarIt
 
     return matchesSearch;
   });
+
+  const handlePublicationAdded = () => {
+    fetchPublications();
+  };
 
   return (
     <DashboardLayout
@@ -115,7 +159,11 @@ export default function PublicationsPage({ onLogout, activeMenuItem, onSidebarIt
             </button>
           </div>
 
-          {filteredPublications.length === 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500">Loading publications...</p>
+            </div>
+          ) : filteredPublications.length === 0 ? (
             <div className="text-center py-12">
               <div className="bg-gray-50 rounded-lg p-8 border border-gray-200">
                 <p className="text-gray-600 font-medium mb-2">No publications found</p>
@@ -166,13 +214,14 @@ export default function PublicationsPage({ onLogout, activeMenuItem, onSidebarIt
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                            pub.status === 'published'
+                          className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${pub.status === 'approved'
                               ? 'bg-green-100 text-green-800'
                               : pub.status === 'pending'
                                 ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                          }`}
+                                : pub.status === 'rejected'
+                                  ? 'bg-red-100 text-red-800'
+                                  : 'bg-gray-100 text-gray-800'
+                            }`}
                         >
                           {pub.status.charAt(0).toUpperCase() + pub.status.slice(1)}
                         </span>
@@ -186,7 +235,11 @@ export default function PublicationsPage({ onLogout, activeMenuItem, onSidebarIt
         </div>
       </div>
 
-      <AddPublicationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <AddPublicationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onPublicationAdded={handlePublicationAdded}
+      />
     </DashboardLayout>
   );
 }
