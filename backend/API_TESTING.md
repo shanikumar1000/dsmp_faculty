@@ -170,7 +170,7 @@ When running these requests, you should see console logs like:
 ```
 🚀 Server is running on port 5000
 📊 API ready at http://localhost:5000
-✅ Firebase Admin initialized successfully
+✅ Server running
 
 📝 Creating faculty profile
    Name: Dr. John Doe

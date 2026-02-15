@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileText, Presentation, User, BookOpen, Mic, Award } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { fetchBackend } from '../lib/api';
 
 interface Activity {
   id: string;
@@ -30,7 +30,7 @@ export default function RecentActivitySection() {
   const fetchRecentActivities = async () => {
     setLoadError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/recent-activities`);
+      const response = await fetchBackend('api/admin/recent-activities');
       if (!response.ok) throw new Error('Server error');
       const result = await response.json();
       if (result.success) {
@@ -38,7 +38,7 @@ export default function RecentActivitySection() {
       } else throw new Error(result.message);
     } catch (error) {
       console.error('Error fetching recent activities:', error);
-      setLoadError('Could not load recent activities. Ensure the backend is running.');
+      setLoadError('Could not load recent activities. Pull down to refresh and try again.');
     }
   };
 

@@ -1,5 +1,3 @@
-const { auth } = require('../firebase/config');
-
 const login = async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -15,6 +13,7 @@ const login = async (req, res) => {
       });
     }
 
+    // Mock login - for real auth, use Supabase Auth on the frontend
     console.log('✅ Login validation successful (mock response)');
 
     res.status(200).json({

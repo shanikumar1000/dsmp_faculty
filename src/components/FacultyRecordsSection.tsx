@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Eye, Download, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { API_BASE_URL } from '../config/api';
+import { fetchBackend } from '../lib/api';
 
 interface Faculty {
   id: string;
@@ -28,13 +29,13 @@ export default function FacultyRecordsSection() {
   const fetchFaculty = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/api/admin/faculty`);
+      const response = await fetchBackend('api/admin/faculty');
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || 'Failed to fetch');
       setFaculty(result.data || []);
     } catch (error) {
       console.error('Failed to fetch faculty:', error);
-      setMessage({ type: 'error', text: 'Could not load faculty list. Ensure the backend is running and uses the same Supabase project.' });
+      setMessage({ type: 'error', text: 'Could not load faculty list. Pull down to refresh; the backend may be waking up.' });
     } finally {
       setIsLoading(false);
     }
@@ -45,7 +46,7 @@ export default function FacultyRecordsSection() {
       setDownloadingId(facultyId);
       setMessage(null);
 
-      const response = await fetch(`${API_BASE_URL}/api/report/generate`, {
+      const response = await fetchBackend('api/report/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import Navbar from '../components/Navbar';
-import { API_BASE_URL } from '../config/api';
 import { fetchBackend } from '../lib/api';
 import { supabase } from '../lib/supabase';
 import { Search, Eye, Download, Loader2, CheckCircle, AlertCircle, X, Users, Plus } from 'lucide-react';
@@ -79,7 +78,7 @@ export default function AdminFacultyRecordsPage({
             setDownloadingId(facultyId);
             setMessage(null);
 
-            const response = await fetch(`${API_BASE_URL}/api/report/generate`, {
+            const response = await fetchBackend('api/report/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ faculty_id: facultyId }),
@@ -114,7 +113,7 @@ export default function AdminFacultyRecordsPage({
             setIsSubmitting(true);
             setMessage(null);
 
-            const response = await fetch(`${API_BASE_URL}/api/admin/create-faculty`, {
+            const response = await fetchBackend('api/admin/create-faculty', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),

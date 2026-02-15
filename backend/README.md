@@ -1,6 +1,6 @@
 # Faculty Performance Management System - Backend
 
-Node.js + Express backend with Firebase Firestore and Authentication.
+Node.js + Express backend with Supabase (PostgreSQL, Auth, Storage).
 
 ## Setup Instructions
 
@@ -11,40 +11,38 @@ cd backend
 npm install
 ```
 
-### 2. Configure Firebase
+### 2. Configure Supabase
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
+1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
 2. Create a new project or select existing one
-3. Go to Project Settings > Service Accounts
-4. Click "Generate New Private Key"
-5. Download the JSON file
+3. Go to Project Settings > API
+4. Copy the **Project URL** and **service_role** key
 
 ### 3. Environment Variables
 
 1. Copy `.env.example` to `.env`
-2. Fill in your Firebase credentials from the downloaded JSON file
+2. Fill in your Supabase credentials
 
 ```bash
 cp .env.example .env
 ```
 
-### 4. Environment variables for admin/faculty alignment
+Add to `.env`:
+- **SUPABASE_URL** – Your Supabase project URL
+- **SUPABASE_SERVICE_ROLE_KEY** – Your Supabase service role key (keep secret!)
 
-The **admin dashboard** (faculty list, counts, activity submissions, approve/reject) reads from this backend. The **faculty side** submits activities directly to **Supabase**. For admin to see the same data as faculty:
+Use the **same** Supabase project as the frontend so admin sees the same data as faculty.
 
-- In `backend/.env`, set **SUPABASE_URL** and **SUPABASE_SERVICE_ROLE_KEY** to the **same** Supabase project used by the frontend (same project as `VITE_SUPABASE_URL` / anon key).
-- Run the backend so the admin UI can call `http://localhost:5000/api/admin/*`.
-
-Health check: `GET http://localhost:5000/api/admin/health` — returns 200 when Supabase is reachable.
-
-### 5. Run the Server
+### 4. Run the Server
 
 ```bash
 npm start
 # or for development: npm run dev
 ```
 
-The server will run on `http://localhost:5000`
+The server runs on `http://localhost:5000`
+
+Health check: `GET http://localhost:5000/api/admin/health`
 
 ## API Endpoints
 
@@ -52,16 +50,16 @@ The server will run on `http://localhost:5000`
 
 **POST** `/api/auth/login`
 - Body: `{ email, password, role }`
-- Returns: Mock success response
+- Returns: Mock success response (real auth uses Supabase on frontend)
 
 ### Faculty
 
 **POST** `/api/faculty`
 - Body: `{ faculty_id, name, department, email, scholar_id, designation }`
-- Creates faculty profile in Firestore
+- Creates faculty profile in Supabase (auth user + profile)
 
 **GET** `/api/faculty/:id`
-- Fetches faculty profile by ID
+- Fetches faculty profile by employee ID
 
 ### Activities
 
@@ -81,45 +79,25 @@ The server will run on `http://localhost:5000`
 **GET** `/api/publications/:faculty_id`
 - Fetches all publications for a faculty member
 
-## Firestore Collections
+### Admin (dashboard, reports, analytics)
 
-### faculty
-- faculty_id (string)
-- name (string)
-- department (string)
-- email (string)
-- scholar_id (string, nullable)
-- designation (string, nullable)
-- created_at (timestamp)
-- updated_at (timestamp)
+- `GET /api/admin/health` – Health check
+- `GET /api/admin/stats` – Dashboard stats
+- `GET /api/admin/faculty` – All faculty
+- `GET /api/admin/activities` – All activities
+- `POST /api/admin/create-faculty` – Create faculty
+- And more – see routes
 
-### activities
-- faculty_id (string)
-- type (string)
-- title (string)
-- date (string)
-- description (string, nullable)
-- proof_link (string, nullable)
-- status (string, default: 'pending')
-- created_at (timestamp)
-- updated_at (timestamp)
+## Data Model (Supabase)
 
-### publications
-- faculty_id (string)
-- paper_title (string)
-- journal_name (string)
-- year (string)
-- doi_link (string, nullable)
-- citations (number, default: 0)
-- status (string)
-- created_at (timestamp)
-- updated_at (timestamp)
+- **profiles** – Faculty/admin profiles (linked to Supabase Auth)
+- **activities** – Faculty activities (workshops, seminars, publications, etc.)
+- **publications** – Publications with citations
 
 ## Console Logging
 
-The backend logs all operations:
 - ✅ Success messages
 - ❌ Error messages
 - 📝 Data creation operations
 - 🔍 Data fetch operations
-- ⚠️  Warning messages
+- ⚠️ Warning messages

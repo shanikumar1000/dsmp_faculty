@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import Navbar from '../components/Navbar';
 import { FileText, Download, Loader2, CheckCircle, AlertCircle, Calendar, Filter, Users } from 'lucide-react';
-import { API_BASE_URL } from '../config/api';
+import { fetchBackend } from '../lib/api';
 
 interface AdminReportsPageProps {
     onLogout: () => void;
@@ -62,7 +62,7 @@ export default function AdminReportsPage({
 
     const fetchActivities = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/activities`);
+            const response = await fetchBackend('api/admin/activities');
             if (!response.ok) throw new Error('Activities request failed');
             const result = await response.json();
             if (result.success) {
@@ -76,7 +76,7 @@ export default function AdminReportsPage({
 
     const fetchFaculty = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/faculty`);
+            const response = await fetchBackend('api/admin/faculty');
             if (!response.ok) throw new Error('Faculty request failed');
             const result = await response.json();
             if (result.success) {
@@ -94,7 +94,7 @@ export default function AdminReportsPage({
 
     const handleApprove = async (id: string) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/activities/${id}/status`, {
+            const response = await fetchBackend(`api/admin/activities/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'approved' })
@@ -110,7 +110,7 @@ export default function AdminReportsPage({
 
     const handleReject = async (id: string) => {
         try {
-            const response = await fetch(`${API_BASE_URL}/api/admin/activities/${id}/status`, {
+            const response = await fetchBackend(`api/admin/activities/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'rejected' })
@@ -129,7 +129,7 @@ export default function AdminReportsPage({
             setDownloadingId(facultyId);
             setMessage(null);
 
-            const response = await fetch(`${API_BASE_URL}/api/report/generate`, {
+            const response = await fetchBackend('api/report/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ faculty_id: facultyId }),
