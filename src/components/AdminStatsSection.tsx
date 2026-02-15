@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../config/api';
+import { fetchBackend } from '../lib/api';
 
 interface StatCardProps {
   label: string;
@@ -25,6 +25,7 @@ export default function AdminStatsSection() {
     avgPerformance: 'N/A'
   });
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     fetchStats();
@@ -32,8 +33,9 @@ export default function AdminStatsSection() {
 
   const fetchStats = async () => {
     setError(null);
+    setRetrying(false);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/stats`);
+      const response = await fetchBackend('api/admin/stats');
       if (!response.ok) throw new Error('Server error');
       const result = await response.json();
       if (result.success) {
@@ -45,8 +47,9 @@ export default function AdminStatsSection() {
         });
       } else throw new Error(result.message || 'Failed to load stats');
     } catch (err) {
+      setRetrying(true);
       console.error('Error fetching admin stats:', err);
-      setError('Could not load dashboard stats. Ensure the backend is running (e.g. npm run dev in backend folder) and uses the same Supabase project as the frontend.');
+      setError('Could not load dashboard stats. If the backend was sleeping, wait a moment and pull down to refresh the page.');
     }
   };
 
@@ -55,6 +58,9 @@ export default function AdminStatsSection() {
       {error && (
         <div className="mb-4 p-3.5 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-800 text-sm">
           {error}
+          {retrying && (
+            <p className="mt-2 text-amber-700 text-xs">Pull down to refresh and try again.</p>
+          )}
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
