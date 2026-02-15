@@ -5,11 +5,22 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const getHealth = async (req, res) => {
+  try {
+    const { error } = await supabase.from('profiles').select('id').limit(1);
+    if (error) throw error;
+    res.json({ success: true, message: 'Backend connected to Supabase' });
+  } catch (err) {
+    console.error('Health check error:', err);
+    res.status(503).json({ success: false, message: 'Supabase unreachable. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in backend .env.' });
+  }
+};
+
 const getAdminStats = async (req, res) => {
   try {
     const { count: totalFaculty } = await supabase
       .from('profiles')
-      .select('id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
       .eq('role', 'faculty');
 
     const { data: facultyData } = await supabase
@@ -23,7 +34,7 @@ const getAdminStats = async (req, res) => {
 
     const { count: pendingActivities } = await supabase
       .from('activities')
-      .select('id', { count: 'exact', head: true })
+      .select('*', { count: 'exact', head: true })
       .eq('status', 'pending');
 
     const { data: performanceData } = await supabase
@@ -331,6 +342,7 @@ const updateActivityStatus = async (req, res) => {
 };
 
 module.exports = {
+  getHealth,
   getAdminStats,
   getPublicationTrends,
   getDepartmentPerformance,

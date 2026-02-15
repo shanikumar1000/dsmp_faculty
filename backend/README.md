@@ -28,10 +28,20 @@ npm install
 cp .env.example .env
 ```
 
-### 4. Run the Server
+### 4. Environment variables for admin/faculty alignment
+
+The **admin dashboard** (faculty list, counts, activity submissions, approve/reject) reads from this backend. The **faculty side** submits activities directly to **Supabase**. For admin to see the same data as faculty:
+
+- In `backend/.env`, set **SUPABASE_URL** and **SUPABASE_SERVICE_ROLE_KEY** to the **same** Supabase project used by the frontend (same project as `VITE_SUPABASE_URL` / anon key).
+- Run the backend so the admin UI can call `http://localhost:5000/api/admin/*`.
+
+Health check: `GET http://localhost:5000/api/admin/health` — returns 200 when Supabase is reachable.
+
+### 5. Run the Server
 
 ```bash
 npm start
+# or for development: npm run dev
 ```
 
 The server will run on `http://localhost:5000`

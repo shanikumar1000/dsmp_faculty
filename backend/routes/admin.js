@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+  getHealth,
   getAdminStats,
   getPublicationTrends,
   getDepartmentPerformance,
@@ -12,6 +13,7 @@ const {
   updateActivityStatus
 } = require('../controllers/adminController');
 
+router.get('/health', getHealth);
 router.get('/stats', getAdminStats);
 router.get('/publication-trends', getPublicationTrends);
 router.get('/department-performance', getDepartmentPerformance);

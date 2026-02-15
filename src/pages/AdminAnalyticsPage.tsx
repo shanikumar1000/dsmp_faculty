@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import Navbar from '../components/Navbar';
 import { TrendingUp, Trophy } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 interface AdminAnalyticsPageProps {
   onLogout: () => void;
@@ -83,7 +84,7 @@ export default function AdminAnalyticsPage({
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/stats');
+      const response = await fetch(`${API_BASE_URL}/api/admin/stats`);
       const result = await response.json();
       if (result.success) {
         setStats(result.data);
@@ -95,7 +96,7 @@ export default function AdminAnalyticsPage({
 
   const fetchPublicationTrends = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/publication-trends');
+      const response = await fetch(`${API_BASE_URL}/api/admin/publication-trends`);
       const result = await response.json();
       if (result.success) {
         setPublicationTrends(result.data);
@@ -107,7 +108,7 @@ export default function AdminAnalyticsPage({
 
   const fetchDepartmentPerformance = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/department-performance');
+      const response = await fetch(`${API_BASE_URL}/api/admin/department-performance`);
       const result = await response.json();
       if (result.success) {
         setDepartmentPerformance(result.data);
@@ -119,7 +120,7 @@ export default function AdminAnalyticsPage({
 
   const fetchTopFaculty = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/top-faculty');
+      const response = await fetch(`${API_BASE_URL}/api/admin/top-faculty`);
       const result = await response.json();
       if (result.success) {
         setTopFaculty(result.data);
@@ -131,7 +132,7 @@ export default function AdminAnalyticsPage({
 
   const fetchRecentActivities = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/admin/recent-activities');
+      const response = await fetch(`${API_BASE_URL}/api/admin/recent-activities`);
       const result = await response.json();
       if (result.success) {
         setRecentActivities(result.data);

@@ -15,7 +15,6 @@ export default function LoginPage({ role, onBack, onSignIn }: LoginPageProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const roleLabel = role === 'faculty' ? 'Faculty' : 'Admin';
-  const roleBadgeColor = role === 'faculty' ? 'bg-blue-100 text-blue-700' : 'bg-indigo-100 text-indigo-700';
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,8 +42,6 @@ export default function LoginPage({ role, onBack, onSignIn }: LoginPageProps) {
       if (profileError) throw profileError;
 
       if (!profileData && role === 'faculty') {
-        console.log(`New faculty profile created for ${authData.user.id}`);
-
         const { error: insertError } = await supabase.from('profiles').insert({
           id: authData.user.id,
           full_name: 'Faculty User',
@@ -58,11 +55,8 @@ export default function LoginPage({ role, onBack, onSignIn }: LoginPageProps) {
           contact_number: '',
           role: 'faculty',
         });
-
         if (insertError) throw insertError;
-
         localStorage.setItem('userRole', 'faculty');
-        console.log(`User logged in as faculty`);
         onSignIn();
         return;
       }
@@ -77,8 +71,6 @@ export default function LoginPage({ role, onBack, onSignIn }: LoginPageProps) {
       }
 
       localStorage.setItem('userRole', profileData.role);
-      console.log(`User logged in as ${profileData.role}`);
-
       onSignIn();
     } catch (err) {
       console.error('Login error:', err);
@@ -89,44 +81,42 @@ export default function LoginPage({ role, onBack, onSignIn }: LoginPageProps) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="border-b border-gray-200 bg-white bg-opacity-70 backdrop-blur-sm">
+    <div className="flex flex-col min-h-screen bg-surface">
+      <header className="border-b border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Faculty Performance System</h1>
+          <h1 className="text-sm font-semibold text-primary-900 tracking-tight">FPMS</h1>
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="flex items-center gap-2 text-slate-600 hover:text-primary-900 text-sm font-medium transition-colors"
           >
-            <ArrowLeft size={20} />
-            <span className="text-sm font-medium">Back</span>
+            <ArrowLeft size={18} />
+            Back
           </button>
         </div>
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-xl shadow-lg p-8 space-y-8">
-            <div className="space-y-2 text-center">
-              <div className="flex justify-center mb-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${roleBadgeColor}`}>
-                  {roleLabel}
-                </span>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Sign in to your account
+        <div className="w-full max-w-[400px]">
+          <div className="bg-white rounded-card border border-slate-200 shadow-card p-8">
+            <div className="mb-6">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                {roleLabel} access
+              </p>
+              <h2 className="text-xl font-semibold text-primary-900 tracking-tight">
+                Sign in
               </h2>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+              <div className="mb-6 p-3.5 bg-red-50 border border-red-100 rounded-lg flex items-start gap-3">
+                <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={18} />
                 <p className="text-sm text-red-800">{error}</p>
               </div>
             )}
 
-            <form className="space-y-6" onSubmit={handleSignIn}>
+            <form className="space-y-5" onSubmit={handleSignIn}>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
                   Email
                 </label>
                 <input
@@ -134,15 +124,15 @@ export default function LoginPage({ role, onBack, onSignIn }: LoginPageProps) {
                   id="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter official email"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="name@institution.edu"
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors placeholder:text-slate-400"
                   required
                   disabled={isLoading}
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-1.5">
                   Password
                 </label>
                 <input
@@ -150,37 +140,25 @@ export default function LoginPage({ role, onBack, onSignIn }: LoginPageProps) {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors placeholder:text-slate-400"
                   required
                   disabled={isLoading}
                 />
               </div>
 
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                  disabled={isLoading}
-                >
-                  Forgot password?
-                </button>
-              </div>
-
               <button
                 type="submit"
-                className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:hover:bg-blue-600 disabled:transform-none"
+                className="w-full px-4 py-3 bg-primary-900 text-white text-sm font-semibold rounded-button hover:bg-primary-800 active:bg-primary-950 transition-colors disabled:opacity-60 disabled:pointer-events-none"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing In...' : 'Sign In'}
+                {isLoading ? 'Signing in…' : 'Sign in'}
               </button>
             </form>
 
-            <div className="pt-6 border-t border-gray-200">
-              <p className="text-xs text-gray-500 text-center leading-relaxed">
-                Only authorized faculty and administrators may access this system.
-              </p>
-            </div>
+            <p className="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-500 text-center">
+              Authorized faculty and administrators only.
+            </p>
           </div>
         </div>
       </main>

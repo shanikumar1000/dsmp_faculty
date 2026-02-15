@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AdminSidebar from '../components/AdminSidebar';
 import Navbar from '../components/Navbar';
 import { FileText, Download, Loader2, CheckCircle, AlertCircle, Calendar, Filter, Users } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 interface AdminReportsPageProps {
     onLogout: () => void;
@@ -43,6 +44,7 @@ export default function AdminReportsPage({
     const [filterFaculty, setFilterFaculty] = useState('');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchAll();
@@ -50,6 +52,7 @@ export default function AdminReportsPage({
 
     const fetchAll = async () => {
         setIsLoading(true);
+        setFetchError(null);
         try {
             await Promise.all([fetchActivities(), fetchFaculty()]);
         } finally {
@@ -59,19 +62,22 @@ export default function AdminReportsPage({
 
     const fetchActivities = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/admin/activities');
+            const response = await fetch(`${API_BASE_URL}/api/admin/activities`);
+            if (!response.ok) throw new Error('Activities request failed');
             const result = await response.json();
             if (result.success) {
                 setActivities(result.data || []);
-            }
+            } else throw new Error(result.message);
         } catch (err) {
             console.error('Error fetching activities:', err);
+            setFetchError('Could not load activities or faculty. Ensure the backend is running (npm run dev in backend folder) and backend .env has the same Supabase project (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY).');
         }
     };
 
     const fetchFaculty = async () => {
         try {
-            const response = await fetch('http://localhost:5000/api/admin/faculty');
+            const response = await fetch(`${API_BASE_URL}/api/admin/faculty`);
+            if (!response.ok) throw new Error('Faculty request failed');
             const result = await response.json();
             if (result.success) {
                 setFacultyList((result.data || []).map((f: any) => ({
@@ -79,15 +85,16 @@ export default function AdminReportsPage({
                     full_name: f.full_name,
                     employee_id: f.employee_id
                 })));
-            }
+            } else throw new Error(result.message);
         } catch (err) {
             console.error('Error fetching faculty:', err);
+            setFetchError('Could not load activities or faculty. Ensure the backend is running and uses the same Supabase project.');
         }
     };
 
     const handleApprove = async (id: string) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/admin/activities/${id}/status`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/activities/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'approved' })
@@ -103,7 +110,7 @@ export default function AdminReportsPage({
 
     const handleReject = async (id: string) => {
         try {
-            const response = await fetch(`http://localhost:5000/api/admin/activities/${id}/status`, {
+            const response = await fetch(`${API_BASE_URL}/api/admin/activities/${id}/status`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'rejected' })
@@ -122,7 +129,7 @@ export default function AdminReportsPage({
             setDownloadingId(facultyId);
             setMessage(null);
 
-            const response = await fetch('http://localhost:5000/api/report/generate', {
+            const response = await fetch(`${API_BASE_URL}/api/report/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ faculty_id: facultyId }),
@@ -194,6 +201,13 @@ export default function AdminReportsPage({
                             <p className="text-gray-600 mt-2 text-sm sm:text-base">Review faculty submissions, approve/reject activities, and generate reports.</p>
                         </div>
 
+                        {/* Connection error when backend unreachable */}
+                        {fetchError && (
+                            <div className="mb-6 p-4 rounded-lg flex items-center gap-3 bg-amber-50 border border-amber-200">
+                                <AlertCircle className="text-amber-600" size={20} />
+                                <p className="text-amber-800 text-sm">{fetchError}</p>
+                            </div>
+                        )}
                         {/* Message */}
                         {message && (
                             <div className={`mb-6 p-4 rounded-lg flex items-center gap-3 ${message.type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'

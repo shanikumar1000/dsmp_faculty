@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FileText, Presentation, User, BookOpen, Mic, Award } from 'lucide-react';
+import { API_BASE_URL } from '../config/api';
 
 interface Activity {
   id: string;
@@ -20,20 +21,24 @@ const iconMap: Record<string, { icon: any; bg: string; color: string }> = {
 
 export default function RecentActivitySection() {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRecentActivities();
   }, []);
 
   const fetchRecentActivities = async () => {
+    setLoadError(null);
     try {
-      const response = await fetch('http://localhost:5000/api/admin/recent-activities');
+      const response = await fetch(`${API_BASE_URL}/api/admin/recent-activities`);
+      if (!response.ok) throw new Error('Server error');
       const result = await response.json();
       if (result.success) {
         setActivities(result.data || []);
-      }
+      } else throw new Error(result.message);
     } catch (error) {
       console.error('Error fetching recent activities:', error);
+      setLoadError('Could not load recent activities. Ensure the backend is running.');
     }
   };
 
@@ -63,31 +68,33 @@ export default function RecentActivitySection() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Recent Activity</h2>
-
-      <div className="space-y-4">
+    <div className="bg-white rounded-card border border-slate-200 shadow-card p-5">
+      <h2 className="text-sm font-semibold text-primary-900 mb-4">Recent activity</h2>
+      {loadError && (
+        <div className="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200/80 text-amber-800 text-sm">{loadError}</div>
+      )}
+      <div className="space-y-1">
         {activities.map((activity) => {
-          const iconInfo = iconMap[activity.activityType] || { icon: FileText, bg: 'bg-gray-100', color: 'text-gray-600' };
+          const iconInfo = iconMap[activity.activityType] || { icon: FileText, bg: 'bg-slate-100', color: 'text-slate-600' };
           const Icon = iconInfo.icon;
           return (
-            <div key={activity.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className={`${iconInfo.bg} p-2 rounded-lg`}>
-                <Icon className={iconInfo.color} size={20} />
+            <div key={activity.id} className="flex items-start gap-3 py-3 px-2 -mx-2 rounded-lg hover:bg-slate-50/80 transition-colors">
+              <div className={`${iconInfo.bg} p-2 rounded-lg flex-shrink-0`}>
+                <Icon className={iconInfo.color} size={18} />
               </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">{getActivityMessage(activity)}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{activity.title}</p>
-                <p className="text-xs text-gray-500 mt-1">{formatTime(activity.createdAt)}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-primary-900">{getActivityMessage(activity)}</p>
+                <p className="text-xs text-slate-600 truncate mt-0.5">{activity.title}</p>
+                <p className="text-xs text-slate-500 mt-1">{formatTime(activity.createdAt)}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {activities.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500 text-sm">No recent activities.</p>
+      {activities.length === 0 && !loadError && (
+        <div className="py-8 text-center">
+          <p className="text-slate-500 text-sm">No recent activity.</p>
         </div>
       )}
     </div>

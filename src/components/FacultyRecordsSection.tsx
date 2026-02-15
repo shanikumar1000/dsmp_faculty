@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Eye, Download, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { API_BASE_URL } from '../config/api';
 
 interface Faculty {
   id: string;
@@ -27,12 +28,13 @@ export default function FacultyRecordsSection() {
   const fetchFaculty = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:5000/api/admin/faculty');
+      const response = await fetch(`${API_BASE_URL}/api/admin/faculty`);
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || 'Failed to fetch');
       setFaculty(result.data || []);
     } catch (error) {
       console.error('Failed to fetch faculty:', error);
+      setMessage({ type: 'error', text: 'Could not load faculty list. Ensure the backend is running and uses the same Supabase project.' });
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +45,7 @@ export default function FacultyRecordsSection() {
       setDownloadingId(facultyId);
       setMessage(null);
 
-      const response = await fetch('http://localhost:5000/api/report/generate', {
+      const response = await fetch(`${API_BASE_URL}/api/report/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,65 +101,59 @@ export default function FacultyRecordsSection() {
   const uniqueDepartments = Array.from(new Set(faculty.map(f => f.department)));
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Faculty Records</h2>
+    <div className="bg-white rounded-card border border-slate-200 shadow-card p-5">
+      <h2 className="text-sm font-semibold text-primary-900 mb-4">Faculty records</h2>
 
       {message && (
         <div className={`mb-4 p-3 rounded-lg flex items-center gap-3 ${message.type === 'success'
-            ? 'bg-green-50 border border-green-200'
+            ? 'bg-emerald-50 border border-emerald-200'
             : 'bg-red-50 border border-red-200'
           }`}>
           {message.type === 'success' ? (
-            <CheckCircle className="text-green-600" size={20} />
+            <CheckCircle className="text-emerald-600 flex-shrink-0" size={18} />
           ) : (
-            <AlertCircle className="text-red-600" size={20} />
+            <AlertCircle className="text-red-600 flex-shrink-0" size={18} />
           )}
-          <p className={message.type === 'success' ? 'text-green-800 text-sm' : 'text-red-800 text-sm'}>
+          <p className={`text-sm ${message.type === 'success' ? 'text-emerald-800' : 'text-red-800'}`}>
             {message.text}
           </p>
         </div>
       )}
 
-      <div className="mb-6 space-y-4">
+      <div className="mb-5 space-y-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
           <input
             type="text"
             placeholder="Search by name or employee ID"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+            className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-colors placeholder:text-slate-400"
           />
         </div>
-
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Filter by Department
-            </label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Department</label>
             <select
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+              className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
             >
-              <option value="">All Departments</option>
+              <option value="">All departments</option>
               {uniqueDepartments.map((dept) => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
           </div>
-
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sort by
-            </label>
+            <label className="block text-xs font-medium text-slate-600 mb-1.5">Sort by</label>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+              className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
             >
               <option value="name">Name</option>
-              <option value="performance">Performance Score</option>
+              <option value="performance">Performance</option>
             </select>
           </div>
         </div>
@@ -165,63 +161,57 @@ export default function FacultyRecordsSection() {
 
       {isLoading ? (
         <div className="text-center py-12">
-          <Loader2 className="animate-spin text-blue-600 mx-auto mb-3" size={32} />
-          <p className="text-gray-600">Loading faculty records...</p>
+          <Loader2 className="animate-spin text-primary-600 mx-auto mb-3" size={28} />
+          <p className="text-slate-500 text-sm">Loading faculty records…</p>
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-5 px-5 border-t border-slate-200 mt-5 pt-5">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Faculty Name</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Department</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Employee ID</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Publications</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Performance Rating</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Actions</th>
+              <tr className="border-b border-slate-200 bg-slate-50/80">
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Department</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Employee ID</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Publications</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Performance</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredFaculty.map((f) => (
-                <tr key={f.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{f.full_name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{f.department}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{f.employee_id}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold">
+                <tr key={f.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-3 font-medium text-primary-900">{f.full_name}</td>
+                  <td className="px-4 py-3 text-slate-600">{f.department}</td>
+                  <td className="px-4 py-3 text-slate-600">{f.employee_id}</td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex px-2 py-0.5 rounded bg-primary-100 text-primary-800 text-xs font-medium">
                       {f.total_publications || 0}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
+                  <td className="px-4 py-3">
                     {f.performance_score !== null ? (
-                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded-md text-xs font-semibold">
+                      <span className="inline-flex px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-xs font-medium">
                         {f.performance_score.toFixed(1)}/100
                       </span>
                     ) : (
-                      <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-md text-xs font-semibold">
+                      <span className="inline-flex px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs font-medium">
                         Pending
                       </span>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="View Profile"
-                      >
-                        <Eye size={18} />
+                    <div className="flex items-center gap-1">
+                      <button type="button" className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="View profile">
+                        <Eye size={16} />
                       </button>
                       <button
+                        type="button"
                         onClick={() => handleDownloadPDF(f.id, f.employee_id)}
                         disabled={downloadingId === f.id}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        title={downloadingId === f.id ? 'Generating official faculty report...' : 'Download PDF'}
+                        className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                        title={downloadingId === f.id ? 'Generating…' : 'Download PDF'}
                       >
-                        {downloadingId === f.id ? (
-                          <Loader2 className="animate-spin" size={18} />
-                        ) : (
-                          <Download size={18} />
-                        )}
+                        {downloadingId === f.id ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
                       </button>
                     </div>
                   </td>
@@ -229,13 +219,10 @@ export default function FacultyRecordsSection() {
               ))}
             </tbody>
           </table>
-
           {filteredFaculty.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500 text-sm">
-                {searchTerm || selectedDepartment
-                  ? 'No faculty records match your filters.'
-                  : 'No faculty records found.'}
+            <div className="text-center py-10">
+              <p className="text-slate-500 text-sm">
+                {searchTerm || selectedDepartment ? 'No faculty match your filters.' : 'No faculty records.'}
               </p>
             </div>
           )}

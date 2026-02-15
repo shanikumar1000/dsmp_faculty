@@ -46,73 +46,67 @@ export default function ProfileCard() {
 
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Information</h2>
-        <p className="text-sm text-gray-500">Loading...</p>
+      <div className="bg-white rounded-card border border-slate-200 shadow-card p-6">
+        <h2 className="text-sm font-semibold text-primary-900 mb-4">Profile</h2>
+        <p className="text-sm text-slate-500">Loading…</p>
       </div>
     );
   }
 
   if (!profile) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Information</h2>
+      <div className="bg-white rounded-card border border-slate-200 shadow-card p-6">
+        <h2 className="text-sm font-semibold text-primary-900 mb-4">Profile</h2>
         <p className="text-sm text-red-600">Failed to load profile</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Information</h2>
+    <div className="bg-white rounded-card border border-slate-200 shadow-card p-6">
+      <h2 className="text-sm font-semibold text-primary-900 mb-5">Profile</h2>
 
       <div className="space-y-4">
         <div>
-          <p className="text-sm text-gray-600">Name</p>
-          <p className="text-base font-medium text-gray-900">{profile.full_name}</p>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Name</p>
+          <p className="text-sm font-medium text-primary-900">{profile.full_name}</p>
         </div>
-
         <div>
-          <p className="text-sm text-gray-600">Department</p>
-          <p className="text-base font-medium text-gray-900">{profile.department}</p>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Department</p>
+          <p className="text-sm font-medium text-primary-900">{profile.department}</p>
         </div>
-
         <div>
-          <p className="text-sm text-gray-600">Employee ID</p>
-          <p className="text-base font-medium text-gray-900">{profile.employee_id}</p>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Employee ID</p>
+          <p className="text-sm font-medium text-primary-900">{profile.employee_id}</p>
         </div>
-
         <div>
-          <p className="text-sm text-gray-600">Google Scholar ID</p>
-          <p className="text-base font-medium text-gray-500">
-            {profile.google_scholar_id || '(Not linked)'}
-          </p>
+          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Google Scholar ID</p>
+          <p className="text-sm font-medium text-slate-600">{profile.google_scholar_id || '—'}</p>
         </div>
 
         {syncMessage && (
-          <div className={`mt-4 p-3 rounded-lg flex items-center gap-2 text-sm ${
+          <div className={`mt-4 p-3 rounded-lg flex items-center gap-2 text-sm border ${
             syncMessage.type === 'success'
-              ? 'bg-green-50 border border-green-200'
-              : 'bg-red-50 border border-red-200'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-red-50 border-red-200 text-red-800'
           }`}>
             {syncMessage.type === 'success' ? (
-              <CheckCircle className="text-green-600" size={16} />
+              <CheckCircle className="text-emerald-600 flex-shrink-0" size={16} />
             ) : (
-              <AlertCircle className="text-red-600" size={16} />
+              <AlertCircle className="text-red-600 flex-shrink-0" size={16} />
             )}
-            <p className={syncMessage.type === 'success' ? 'text-green-800' : 'text-red-800'}>
-              {syncMessage.text}
-            </p>
+            <span>{syncMessage.text}</span>
           </div>
         )}
 
         <button
+          type="button"
           onClick={handleSyncScholar}
           disabled={isSyncing}
-          className="w-full mt-6 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full mt-5 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-900 text-white text-sm font-semibold rounded-button hover:bg-primary-800 transition-colors disabled:opacity-60 disabled:pointer-events-none"
         >
           <ExternalLink size={16} />
-          {isSyncing ? 'Syncing...' : 'Sync with Google Scholar'}
+          {isSyncing ? 'Syncing…' : 'Sync with Google Scholar'}
         </button>
       </div>
     </div>

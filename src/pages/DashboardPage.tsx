@@ -57,18 +57,18 @@ export default function DashboardPage({
   };
 
   const getCategoryColor = (category: string | null) => {
-    if (!category) return 'bg-gray-100 text-gray-800';
+    if (!category) return 'bg-slate-100 text-slate-700';
     switch (category) {
       case 'Excellent':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100 text-emerald-800';
       case 'Good':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-primary-100 text-primary-800';
       case 'Average':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-100 text-amber-800';
       case 'Needs Improvement':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-100 text-slate-700';
     }
   };
 
@@ -78,10 +78,10 @@ export default function DashboardPage({
       onSidebarItemClick={onSidebarItemClick}
       onLogout={onLogout}
     >
-      <div className="p-8 max-w-7xl mx-auto w-full">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back, {profile?.full_name || 'Faculty User'}</p>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold text-primary-900 tracking-tight">Dashboard</h1>
+          <p className="text-slate-500 mt-1 text-sm">Welcome back, {profile?.full_name || 'Faculty User'}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -89,25 +89,25 @@ export default function DashboardPage({
             <ProfileCard />
           </div>
 
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <StatsTile label="Total Publications" value={profile?.total_publications || 0} />
               <StatsTile label="Total Citations" value={profile?.total_citations || 0} />
               <StatsTile label="H-Index" value={profile?.h_index || 0} />
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <p className="text-sm text-gray-600 mb-2">Performance Rating</p>
-                <div className="flex items-baseline gap-2 mb-4">
+              <div className="bg-white rounded-card border border-slate-200 shadow-card p-5">
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Performance</p>
+                <div className="flex items-baseline gap-1.5 mb-3">
                   {profile?.performance_score !== null && profile?.performance_score !== undefined ? (
                     <>
-                      <p className="text-3xl font-bold text-blue-600">{profile.performance_score}</p>
-                      <p className="text-sm text-gray-500">/100</p>
+                      <span className="text-2xl font-semibold text-primary-900">{profile.performance_score}</span>
+                      <span className="text-sm text-slate-500">/100</span>
                     </>
                   ) : (
-                    <p className="text-2xl font-bold text-gray-400">Pending</p>
+                    <span className="text-xl font-medium text-slate-400">Pending</span>
                   )}
                 </div>
                 {profile?.performance_category && (
-                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getCategoryColor(profile.performance_category)}`}>
+                  <span className={`inline-flex px-2.5 py-0.5 rounded text-xs font-medium ${getCategoryColor(profile.performance_category)}`}>
                     {profile.performance_category}
                   </span>
                 )}
@@ -115,29 +115,28 @@ export default function DashboardPage({
             </div>
 
             {analysisMessage && (
-              <div className={`p-4 rounded-lg flex items-center gap-3 ${
+              <div className={`p-3.5 rounded-lg flex items-center gap-3 border ${
                 analysisMessage.type === 'success'
-                  ? 'bg-green-50 border border-green-200'
-                  : 'bg-red-50 border border-red-200'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
               }`}>
                 {analysisMessage.type === 'success' ? (
-                  <CheckCircle className="text-green-600" size={20} />
+                  <CheckCircle className="text-emerald-600 flex-shrink-0" size={18} />
                 ) : (
-                  <AlertCircle className="text-red-600" size={20} />
+                  <AlertCircle className="text-red-600 flex-shrink-0" size={18} />
                 )}
-                <p className={analysisMessage.type === 'success' ? 'text-green-800' : 'text-red-800'}>
-                  {analysisMessage.text}
-                </p>
+                <span className="text-sm">{analysisMessage.text}</span>
               </div>
             )}
 
             <button
+              type="button"
               onClick={handleRunAnalysis}
               disabled={isAnalyzing}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-5 py-3 bg-primary-900 text-white text-sm font-semibold rounded-button hover:bg-primary-800 transition-colors disabled:opacity-60 disabled:pointer-events-none"
             >
-              <Brain size={20} />
-              {isAnalyzing ? 'Analyzing performance using AI...' : 'Run Performance Analysis'}
+              <Brain size={18} />
+              {isAnalyzing ? 'Analyzing…' : 'Run performance analysis'}
             </button>
           </div>
         </div>

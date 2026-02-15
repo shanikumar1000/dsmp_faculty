@@ -19,7 +19,7 @@ export default function AdminDashboardPage({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-surface">
       <AdminSidebar
         activeItem={activeMenuItem}
         onItemClick={onSidebarItemClick}
@@ -32,13 +32,13 @@ export default function AdminDashboardPage({
         <Navbar onLogout={onLogout} onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="p-4 sm:p-8 max-w-7xl mx-auto w-full">
-            <div className="mb-6 sm:mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600 mt-2 text-sm sm:text-base">Overview of faculty performance and activities</p>
+          <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+            <div className="mb-6">
+              <h1 className="text-xl font-semibold text-primary-900 tracking-tight">Admin dashboard</h1>
+              <p className="text-slate-500 mt-1 text-sm">Overview of faculty performance and activities</p>
             </div>
 
-            <div className="space-y-6 sm:space-y-8">
+            <div className="space-y-6">
               <AdminStatsSection />
               <FacultyRecordsSection />
               <RecentActivitySection />

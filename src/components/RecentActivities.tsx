@@ -55,58 +55,55 @@ export default function RecentActivities({ onAddActivityClick }: RecentActivitie
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Recent Activities</h2>
+    <div className="bg-white rounded-card border border-slate-200 shadow-card overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-primary-900">Recent activities</h2>
         <button
+          type="button"
           onClick={onAddActivityClick}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-3.5 py-2 bg-primary-900 text-white text-sm font-semibold rounded-button hover:bg-primary-800 transition-colors"
         >
-          <Plus size={18} />
-          Add New Activity
+          <Plus size={16} />
+          Add activity
         </button>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Date</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Activity Type</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Title</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 bg-gray-50">Status</th>
+            <tr className="border-b border-slate-200 bg-slate-50/80">
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
+              <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  <p className="text-sm">Loading activities...</p>
-                </td>
+                <td colSpan={4} className="px-4 py-10 text-center text-slate-500 text-sm">Loading…</td>
               </tr>
             ) : activities.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                  <p className="text-sm">No activities yet. Start by adding a new activity.</p>
-                </td>
+                <td colSpan={4} className="px-4 py-10 text-center text-slate-500 text-sm">No activities yet. Add one to get started.</td>
               </tr>
             ) : (
               activities.map((activity) => (
-                <tr key={activity.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-sm text-gray-600">{formatDate(activity.created_at)}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-semibold">
+                <tr key={activity.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-3 text-slate-600">{formatDate(activity.created_at)}</td>
+                  <td className="px-4 py-3">
+                    <span className="inline-flex px-2 py-0.5 rounded bg-primary-100 text-primary-800 text-xs font-medium">
                       {activity.activity_type}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{activity.title}</td>
-                  <td className="px-4 py-3 text-sm">
-                    <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                  <td className="px-4 py-3 font-medium text-primary-900">{activity.title}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
                       activity.status === 'approved'
-                        ? 'bg-green-50 text-green-700'
+                        ? 'bg-emerald-100 text-emerald-800'
                         : activity.status === 'rejected'
-                        ? 'bg-red-50 text-red-700'
-                        : 'bg-yellow-50 text-yellow-700'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-amber-100 text-amber-800'
                     }`}>
                       {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
                     </span>
